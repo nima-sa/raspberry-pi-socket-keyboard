@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>rpiKeyboard</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='rpi-logo.ico') }}">
+    <style>
+        * {
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .mouse-btn {
+            width: 4em;
+            height: 4em;
+            border: none;
+        }
+
+        .mouse-wheel {
+            width: 8em;
+            height: 8em;
+            border: none;
+        }
+
+        .mouse-row {
+            display: flex;
+        }
+
+        .kbd-btn {
+            background: white;
+            border: solid 2px;
+            border-radius: 5px;
+            box-shadow: none !important;
+            width: 10rem;
+            height: 10rem;
+            transition: all 200ms ease-out;
+            font-size: 250%;
+        }
+
+        .kbd-btn:hover {
+            box-shadow: 0 10px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
+        }
+    </style>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function () {
+
+            let socket = io('ws://' + document.domain + ':' + location.port);
+            socket.on('connect', function () {
+                document.getElementById('stat').innerText = 'Connected';
+                document.getElementById('stat').style.color = 'green';
+            });
+
+            socket.on('disconnect', function () {
+                document.getElementById('stat').innerText = 'Disconnected';
+                document.getElementById('stat').style.color = 'red';
+            });
+
+            function spec(v) {
+                socket.emit('spec', {key: v});
+            }
+
+            document.getElementById('txtf').onkeydown = function (event) {
+                const key = event.keyCode || event.charCode;
+
+                if (key === 8) {
+                    spec('backspace');
+                    return false;
+                } else if (key === 13) {
+                    spec('enter');
+                    return false;
+                } else {
+                    return true;
+                }
+            };
+
+            document.getElementById('txtf').addEventListener('input', () => {
+                const elem = document.getElementById('txtf');
+                socket.emit('kbhit', {key: elem.value});
+                elem.value = '';
+            });
+            const specs = ['up', 'left', 'right', 'down', 'escape', 'tab', 'enter'];
+            for (let k = 0; k < specs.length; k++) {
+                document.getElementById(specs[k]).onclick = function () {
+                    spec(specs[k])
+                }
+            }
+
+            let mk = 21;
+            for (let i = 0; i < mk; i++) {
+                const cont = document.getElementById('mouse-cont');
+                const row = document.createElement('div')
+                row.className = 'mouse-row'
+                for (let j = 0; j < mk; j++) {
+                    const i_mid = Math.floor(mk / 2)
+                    let color = Math.pow(i - i_mid, 2) + Math.pow(j - i_mid, 2);
+                    color = color + 110;
+                    const btn = document.createElement('button')
+                    btn.className = 'mouse-btn'
+                    btn.style.background = 'rgb(' + color + ',' + color + ',' + color + ')'
+                    row.appendChild(btn)
+
+                    const mid = Math.ceil(mk / 2);
+                    if (i === i_mid && j === i_mid) {
+                        btn.style.background = 'rgb(0,0,0)'
+                    } else {
+                        btn.onclick = () => {
+                            socket.emit('mouse_t', {y: i - i_mid, x: j - i_mid});
+                        }
+                    }
+                }
+                cont.appendChild(row)
+            }
+            mk = 11;
+            const wheel_ctrl_ver = document.getElementById('wheel-ctrl-ver');
+            for (let i = 0; i < mk; i++) {
+                const i_mid = Math.floor(mk / 2)
+                let color = Math.abs(i - i_mid) / i_mid * 128 + 50;
+                const btn = document.createElement('button')
+                btn.className = 'mouse-wheel'
+                btn.style.background = 'rgb(0,' + color + ',' + color + ')'
+                btn.onclick = () => {
+                    socket.emit('scroll', {x: 0, y: i - i_mid})
+                }
+                wheel_ctrl_ver.appendChild(btn)
+            }
+
+            const wheel_ctrl_hor = document.getElementById('wheel-ctrl-hor');
+            for (let i = 0; i < mk; i++) {
+                const i_mid = Math.floor(mk / 2)
+                let color = Math.abs(i - i_mid) / i_mid * 128 + 50;
+                const btn = document.createElement('button')
+                btn.className = 'mouse-wheel'
+                btn.style.background = 'rgb(0,' + color + ',' + color + ')'
+                btn.onclick = () => {
+                    socket.emit('scroll', {x: i - i_mid, y: 0})
+                }
+                wheel_ctrl_hor.appendChild(btn)
+            }
+
+            const clks = ['r', 'l'];
+            for (let k = 0; k < clks.length; k++) {
+                document.getElementById(clks[k] + '-clk').onclick = function () {
+                    socket.emit('clk', {key: clks[k]})
+                }
+            }
+
+        });
+    </script>
+</head>
+<body>
+<div>
+    <p style="text-align: center; font-weight: bold; font-size: 300%; color: red"
+       id="stat">Disconnected</p>
+</div>
+
+<div style="display: flex; padding: 16px">
+    <label for="txtf">
+    </label>
+    <input
+            style="border: solid 3px;
+            width: 100%; height: 200px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 300%;"
+            type="text" id="txtf" placeholder="Type here...">
+</div>
+
+<div style="display: flex; justify-content: center; padding: 20px;flex-direction: column;align-items: center;">
+    <div>
+        <button class="kbd-btn" style="width: 15rem" id="escape">esc</button>
+        <button class="kbd-btn" style="width: 15rem" id="tab">tab</button>
+        <button class="kbd-btn" style="width: 15rem" id="enter">enter</button>
+    </div>
+
+    <div style="padding: 38px;">
+        <div style="display: flex; justify-content: center; padding: 4px;">
+            <button class="kbd-btn" id="up">↑</button>
+        </div>
+
+        <div>
+            <button class="kbd-btn" id="left">←</button>
+            <button class="kbd-btn" id="down">↓</button>
+            <button class="kbd-btn" id="right">→</button>
+        </div>
+    </div>
+
+</div>
+
+<div style="display: flex; justify-content: center; flex-direction: column; align-items: center">
+    <div style="padding: 8px">
+        <button class="kbd-btn" style="width: 20rem; height: 10rem" id="l-clk">Left click</button>
+        <button class="kbd-btn" style="width: 20rem; height: 10rem" id="r-clk">Right click</button>
+    </div>
+    <div>
+        <div style="display: flex;">
+            <div id="mouse-cont" style="border: solid; border-radius: 5px"></div>
+            <div style="display: flex; flex-direction: column" id="wheel-ctrl-ver"></div>
+        </div>
+        <div style="display: flex; flex-direction: row" id="wheel-ctrl-hor"></div>
+    </div>
+</div>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+</body>
+</html>
