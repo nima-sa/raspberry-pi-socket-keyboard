@@ -1,3 +1,7 @@
+import os
+
+os.environ['DISPLAY'] = ':0'
+
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 import pyautogui
@@ -18,12 +22,17 @@ def hello_world():
 @socketio.on('kbhit')
 def handle_message(data):
     k = data['key']
-    pyperclip.copy(k)
+    o = data['o'] == 1
 
-    if platform.system() == "Darwin":
-        pyautogui.hotkey("command", "v")
+    if o:
+        pyautogui.press(k)
     else:
-        pyautogui.hotkey("ctrl", "v")
+        pyperclip.copy(k)
+
+        if platform.system() == "Darwin":
+            pyautogui.hotkey("command", "v")
+        else:
+            pyautogui.hotkey("ctrl", "v")
 
     print('kbhit: ', k)
 
@@ -38,11 +47,15 @@ def handle_message(data):
 @socketio.on('mouse_t')
 def handle_message(data):
     x, y = data['x'], data['y']
-    # pyautogui.KEYBOARD_KEYS
+
     x = x * 50 if 1 != math.fabs(x) else x
     y = y * 50 if 1 != math.fabs(y) else y
 
-    pyautogui.moveRel(x, y)
+    try:
+        pyautogui.moveRel(x, y)
+    except pyautogui.FailSafeException:
+        pass
+
     print('mouse: ', (x, y))
 
 
@@ -51,8 +64,10 @@ def handle_message(data):
     key = data['key']
     if key == 'r':
         pyautogui.rightClick()
-    else:
+    elif key == 'l':
         pyautogui.leftClick()
+    elif key == 'l2':
+        pyautogui.doubleClick()
 
     print('click: ', key)
 
@@ -73,5 +88,3 @@ def handle_message(data):
 
 if __name__ == '__main__':
     socketio.run(app, '0.0.0.0', '5000')
-
-

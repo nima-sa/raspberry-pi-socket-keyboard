@@ -31,7 +31,7 @@
             border-radius: 5px;
             box-shadow: none !important;
             width: 10rem;
-            height: 10rem;
+            height: 8rem;
             transition: all 200ms ease-out;
             font-size: 250%;
         }
@@ -76,10 +76,24 @@
 
             document.getElementById('txtf').addEventListener('input', () => {
                 const elem = document.getElementById('txtf');
-                socket.emit('kbhit', {key: elem.value});
+                const key = elem.value
                 elem.value = '';
+                const pyautoguiSupportedChars = [
+                    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+                    'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
+                    'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
+                    'z', 'x', 'c', 'v', 'b', 'n', 'm',
+                    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+                    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+                    'Z', 'X', 'C', 'V', 'B', 'N', 'M',
+                    ',', '.', '/', '[', ']', '\\', ';', '\'', '-', '=', '`',
+                    '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_',
+                    '+', '{', '}', '|', ':', '"', '<', '>', '?'
+                ]
+                const o = pyautoguiSupportedChars.indexOf(key) !== -1 ? 1 : 0
+                socket.emit('kbhit', {key: key, o: o});
             });
-            const specs = ['up', 'left', 'right', 'down', 'escape', 'tab', 'enter'];
+            const specs = ['up', 'left', 'right', 'down', 'escape', 'tab', 'enter', 'space'];
             for (let k = 0; k < specs.length; k++) {
                 document.getElementById(specs[k]).onclick = function () {
                     spec(specs[k])
@@ -138,7 +152,7 @@
                 wheel_ctrl_hor.appendChild(btn)
             }
 
-            const clks = ['r', 'l'];
+            const clks = ['r', 'l', 'l2'];
             for (let k = 0; k < clks.length; k++) {
                 document.getElementById(clks[k] + '-clk').onclick = function () {
                     socket.emit('clk', {key: clks[k]})
@@ -172,6 +186,7 @@
         <button class="kbd-btn" style="width: 15rem" id="tab">tab</button>
         <button class="kbd-btn" style="width: 15rem" id="enter">enter</button>
     </div>
+        <button class="kbd-btn" style="width: 45rem; height: 5rem; margin-top: 16px" id="space">space</button>
 
     <div style="padding: 38px;">
         <div style="display: flex; justify-content: center; padding: 4px;">
@@ -188,9 +203,12 @@
 </div>
 
 <div style="display: flex; justify-content: center; flex-direction: column; align-items: center">
-    <div style="padding: 8px">
-        <button class="kbd-btn" style="width: 20rem; height: 10rem" id="l-clk">Left click</button>
-        <button class="kbd-btn" style="width: 20rem; height: 10rem" id="r-clk">Right click</button>
+    <div style="display: flex; padding: 8px">
+        <button class="kbd-btn" style="width: 8rem; height: 8rem; font-size: 30px" id="l2-clk">Double<br/>click</button>
+        <div style="width: 4px"></div>
+        <button class="kbd-btn" style="width: 12rem; height: 8rem" id="l-clk">Left click</button>
+        <div style="width: 16px"></div>
+        <button class="kbd-btn" style="width: 20rem; height: 8rem" id="r-clk">Right click</button>
     </div>
     <div>
         <div style="display: flex;">
