@@ -1,7 +1,1 @@
-self.__precacheManifest = (self.__precacheManifest || []).concat([{
-    "revision": "e3a32dd0025e806ed0c89",
-    "url": "/index.html"
-}, {"revision": "a5f39f9fcc9a9bfa41b2d", "url": "/static/rpi-logo.ico"}, {
-    "revision": "773571f9cff104374c96b",
-    "url": "/static/rpi-logo.png"
-}]);
+self.__precacheManifest=(self.__precacheManifest || []).concat([{"revision": "9670730ea5d2930b40421", "url": "/index.html"}, {"revision": "93793edcdb035a3394c53", "url": "/static/rpi-logo.ico"}, {"revision": "2ddcf2358918c523d53f0", "url": "/static/rpi-logo.png"}, {"revision": "fe7efcfb4bcff057a7597", "url": "/static/Icon-512.png"}, {"revision": "a1c248d57a980d69e1863", "url": "/static/Icon-192.png"}]);

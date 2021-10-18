@@ -24,12 +24,26 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/service-worker.js')
-def sw():
+def make_file(name):
     response = make_response(
-        send_from_directory('static', filename='service-worker.js', path='static/service-worker.js'))
+        send_from_directory('static', filename=name, path=f'static/{name}'))
     response.headers['Content-Type'] = 'application/javascript'
     return response
+
+
+@app.route('/service-worker.js')
+def sw():
+    return make_file('service-worker.js')
+
+
+@app.route('/precache-manifest.js')
+def precache():
+    return make_file('precache-manifest.js')
+
+
+@app.route('/manifest.json')
+def manifest():
+    return make_file('manifest.json')
 
 
 @socketio.on('kbhit')

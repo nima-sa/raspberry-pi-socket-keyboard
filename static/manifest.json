@@ -3,15 +3,20 @@
     "short_name": "RPi keyboard",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
+    "background_color": "#D60046",
+    "theme_color": "#D60046",
     "description": "RPi keyboard",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
         {
-            "src": "rpi-logo.png",
-            "sizes": "493x493",
+            "src": "static/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "static/Icon-512.png",
+            "sizes": "512x512",
             "type": "image/png"
         }
     ],

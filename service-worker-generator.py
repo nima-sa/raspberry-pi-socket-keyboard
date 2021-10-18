@@ -3,7 +3,7 @@ from hashlib import sha224
 import json
 import time
 
-files = ['/index.html', '/static/rpi-logo.ico', '/static/rpi-logo.png']
+files = ['/index.html', '/static/rpi-logo.ico', '/static/rpi-logo.png', '/static/Icon-512.png', '/static/Icon-192.png']
 
 
 def revision_generator(file_path, l=21):
