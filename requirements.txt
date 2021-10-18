@@ -3,3 +3,4 @@ flask-socketio
 pyautogui
 eventlet
 pyperclip
+python-xlib

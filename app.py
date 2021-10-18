@@ -2,7 +2,7 @@ import os
 
 os.environ['DISPLAY'] = ':0'
 
-from flask import Flask, render_template
+from flask import Flask, render_template, make_response, send_from_directory
 from flask_socketio import SocketIO
 import pyautogui
 import pyperclip
@@ -17,6 +17,19 @@ socketio = SocketIO(app)
 @app.route('/')
 def hello_world():
     return render_template('index.html')
+
+
+@app.route('/index.html')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/service-worker.js')
+def sw():
+    response = make_response(
+        send_from_directory('static', filename='service-worker.js', path='static/service-worker.js'))
+    response.headers['Content-Type'] = 'application/javascript'
+    return response
 
 
 @socketio.on('kbhit')
@@ -64,10 +77,8 @@ def handle_message(data):
     key = data['key']
     if key == 'r':
         pyautogui.rightClick()
-    elif key == 'l':
+    else:
         pyautogui.leftClick()
-    elif key == 'l2':
-        pyautogui.doubleClick()
 
     print('click: ', key)
 

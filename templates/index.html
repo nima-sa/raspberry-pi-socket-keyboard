@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>rpiKeyboard</title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='rpi-logo.ico') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+
     <style>
         * {
             font-family: "Segoe UI", Arial, sans-serif;
@@ -223,6 +225,10 @@
 <br>
 <br>
 <br>
-
+  <script>
+    if ('serviceWorker' in navigator)
+        navigator.serviceWorker.register('service-worker.js');
+    
+  </script>
 </body>
 </html>

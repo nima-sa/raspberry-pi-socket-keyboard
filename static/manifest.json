@@ -1,0 +1,19 @@
+{
+    "name": "RPi keyboard",
+    "short_name": "RPi keyboard",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "RPi keyboard",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "rpi-logo.png",
+            "sizes": "493x493",
+            "type": "image/png"
+        }
+    ],
+    "version": "1.0"
+}

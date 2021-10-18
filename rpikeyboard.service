@@ -1,0 +1,10 @@
+[Unit]
+Description=RPi keyboard
+
+[Service]
+User=pi
+Type=simple
+ExecStart=/bin/bash /home/pi/Desktop/rpiKeyboard/run.sh
+
+[Install]
+WantedBy=multi-user.target
