@@ -26,7 +26,7 @@ def index():
 
 def make_file(name):
     response = make_response(
-        send_from_directory('static', filename=name, path=f'static/{name}'))
+        send_from_directory('static', filename=f'static/{name}'))
     response.headers['Content-Type'] = 'application/javascript'
     return response
 
