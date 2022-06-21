@@ -8,3 +8,4 @@ ExecStart=/bin/bash /home/pi/Desktop/rpiKeyboard/run.sh
 
 [Install]
 WantedBy=multi-user.target
+
