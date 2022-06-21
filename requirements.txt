@@ -1,6 +1,6 @@
-flask
-flask-socketio
-pyautogui
+flask==2.1.2
+flask-socketio==5.2.0
+pyautogui==0.9.53
 eventlet
 pyperclip
 python-xlib

@@ -7,11 +7,12 @@ from flask_socketio import SocketIO
 import pyautogui
 import pyperclip
 import platform
-import math
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'_5#y2L"F4Q8z\n\xec]/'
 socketio = SocketIO(app)
+
+pyautogui.FAILSAFE = False
 
 
 @app.route('/')
@@ -24,26 +25,32 @@ def index():
     return render_template('index.html')
 
 
-def make_file(name):
+def return_file(name):
     response = make_response(
-        send_from_directory('static', filename=f'static/{name}'))
+        # send_from_directory('static', filename=f'static/{name}'))
+        send_from_directory('static', filename=name, path=f'static/{name}'))
     response.headers['Content-Type'] = 'application/javascript'
     return response
 
 
 @app.route('/service-worker.js')
 def sw():
-    return make_file('service-worker.js')
+    return return_file('service-worker.js')
 
 
 @app.route('/precache-manifest.js')
 def precache():
-    return make_file('precache-manifest.js')
+    return return_file('precache-manifest.js')
 
 
 @app.route('/manifest.json')
 def manifest():
-    return make_file('manifest.json')
+    return return_file('manifest.json')
+
+
+# @app.route('/zingtouch.min.js')
+# def manifest():
+#     return make_file('zingtouch.min.js')
 
 
 @socketio.on('kbhit')
@@ -61,29 +68,29 @@ def handle_message(data):
         else:
             pyautogui.hotkey("ctrl", "v")
 
-    print('kbhit: ', k)
+    # print('kbhit: ', k)
 
 
 @socketio.on('spec')
 def handle_message(data):
     k = data['key']
     pyautogui.press(k)
-    print('kbhit: ', k)
+    # print('kbhit: ', k)
 
 
 @socketio.on('mouse_t')
 def handle_message(data):
     x, y = data['x'], data['y']
-
-    x = x * 50 if 1 != math.fabs(x) else x
-    y = y * 50 if 1 != math.fabs(y) else y
+    # x, y = x * 5, y * 5
+    # x = x * 50 if 1 != math.fabs(x) else x
+    # y = y * 50 if 1 != math.fabs(y) else y
 
     try:
         pyautogui.moveRel(x, y)
     except pyautogui.FailSafeException:
         pass
 
-    print('mouse: ', (x, y))
+    # print('mouse: ', (x, y))
 
 
 @socketio.on('clk')
@@ -91,24 +98,23 @@ def handle_message(data):
     key = data['key']
     if key == 'r':
         pyautogui.rightClick()
-    else:
+    elif key == 'l':
         pyautogui.leftClick()
-
-    print('click: ', key)
+    elif key == 'l2':
+        pyautogui.doubleClick()
+    # print('click: ', key)
 
 
 @socketio.on('scroll')
 def handle_message(data):
     x, y = data['x'], data['y']
-    x, y = x * 5, y * 5
+    # x, y = x * 5, y * 5
     # x = x * 2 if 1 != math.fabs(x) else x
     # y = y * 2 if 1 != math.fabs(y) else y
     if y != 0:
-        pyautogui.scroll(-y)
+        pyautogui.vscroll(y)
     if x != 0:
-        pyautogui.hscroll(-x)
-
-    print('scroll: ', (x, y))
+        pyautogui.hscroll(x)
 
 
 if __name__ == '__main__':

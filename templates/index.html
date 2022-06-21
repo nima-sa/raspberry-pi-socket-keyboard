@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>rpiKeyboard</title>
-    <link rel="shortcut icon" href="{{ url_for('static', filename='rpi-logo.ico') }}">
-    <link rel="manifest" href="manifest.json">
+    <link rel="shortcut icon" href="static/rpi-logo.ico">
+    {#    <link rel="manifest" href="manifest.json">#}
 
     <meta name="apple-mobile-web-app-capable" content="yes">
-      <meta name="apple-mobile-web-app-status-bar-style" content="black">
-      <meta name="apple-mobile-web-app-title" content="RPi keyboard">
-      <meta name="apple-mobile-web-app-status-bar-style" content="default">
-      <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="RPi keyboard">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#000000"/>
 
-{#      <meta name="viewport"#}
-{#        content="width=device-width, viewport-fit=cover, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />#}
+    {#      <meta name="viewport"#}
+    {#        content="width=device-width, viewport-fit=cover, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />#}
     <link rel="apple-touch-icon" href="static/Icon-192.png">
 
     <style>
@@ -52,11 +52,11 @@
             box-shadow: 0 10px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
         }
     </style>
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
-    <script type="text/javascript" charset="utf-8">
-        $(document).ready(function () {
-
+    <script type="text/javascript" src="static/socket.io.min.js"></script>
+    <script type="text/javascript" src="static/zingtouch.min.js"></script>
+    <script charset="utf-8" type="text/javascript">
+        // $(document).ready(function () {
+        document.addEventListener("DOMContentLoaded", function (event) {
             let socket = io('ws://' + document.domain + ':' + location.port);
             socket.on('connect', function () {
                 document.getElementById('stat').innerText = 'Connected';
@@ -112,57 +112,33 @@
                 }
             }
 
-            let mk = 21;
-            for (let i = 0; i < mk; i++) {
-                const cont = document.getElementById('mouse-cont');
-                const row = document.createElement('div')
-                row.className = 'mouse-row'
-                for (let j = 0; j < mk; j++) {
-                    const i_mid = Math.floor(mk / 2)
-                    let color = Math.pow(i - i_mid, 2) + Math.pow(j - i_mid, 2);
-                    color = color + 110;
-                    const btn = document.createElement('button')
-                    btn.className = 'mouse-btn'
-                    btn.style.background = 'rgb(' + color + ',' + color + ',' + color + ')'
-                    row.appendChild(btn)
+            // scroll vertical start
+            let scrollVerRegion = new ZingTouch.Region(document.getElementById('whole-mouse-cont-parent'));
+            let scrollVerTarget = document.getElementById('wheel-ctrl-ver');
+            var lastMouseScrollVerInterval = Date.now()
+            scrollVerRegion.bind(scrollVerTarget, 'pan', function (e) {
+                let now = Date.now()
+                if (now > lastMouseScrollVerInterval) {
+                    pos = e.detail.data[0].change
+                    socket.emit('scroll', {x: 0, y: pos.y})
+                    lastMouseScrollVerInterval = now + 75
+                }
+            })
+            // scroll vertical end
 
-                    const mid = Math.ceil(mk / 2);
-                    if (i === i_mid && j === i_mid) {
-                        btn.style.background = 'rgb(0,0,0)'
-                    } else {
-                        btn.onclick = () => {
-                            socket.emit('mouse_t', {y: i - i_mid, x: j - i_mid});
-                        }
-                    }
+            // scroll horizontal start
+            let scrollHorRegion = new ZingTouch.Region(document.getElementById('whole-mouse-cont-parent'));
+            let scrollHorTarget = document.getElementById('wheel-ctrl-hor');
+            var lastMouseScrollHorInterval = Date.now()
+            scrollHorRegion.bind(scrollHorTarget, 'pan', function (e) {
+                let now = Date.now()
+                if (now > lastMouseScrollHorInterval) {
+                    pos = e.detail.data[0].change
+                    socket.emit('scroll', {x: pos.x, y: 0})
+                    lastMouseScrollHorInterval = now + 75
                 }
-                cont.appendChild(row)
-            }
-            mk = 11;
-            const wheel_ctrl_ver = document.getElementById('wheel-ctrl-ver');
-            for (let i = 0; i < mk; i++) {
-                const i_mid = Math.floor(mk / 2)
-                let color = Math.abs(i - i_mid) / i_mid * 128 + 50;
-                const btn = document.createElement('button')
-                btn.className = 'mouse-wheel'
-                btn.style.background = 'rgb(0,' + color + ',' + color + ')'
-                btn.onclick = () => {
-                    socket.emit('scroll', {x: 0, y: i - i_mid})
-                }
-                wheel_ctrl_ver.appendChild(btn)
-            }
-
-            const wheel_ctrl_hor = document.getElementById('wheel-ctrl-hor');
-            for (let i = 0; i < mk; i++) {
-                const i_mid = Math.floor(mk / 2)
-                let color = Math.abs(i - i_mid) / i_mid * 128 + 50;
-                const btn = document.createElement('button')
-                btn.className = 'mouse-wheel'
-                btn.style.background = 'rgb(0,' + color + ',' + color + ')'
-                btn.onclick = () => {
-                    socket.emit('scroll', {x: i - i_mid, y: 0})
-                }
-                wheel_ctrl_hor.appendChild(btn)
-            }
+            })
+            // scroll horizontal end
 
             const clks = ['r', 'l', 'l2'];
             for (let k = 0; k < clks.length; k++) {
@@ -171,6 +147,73 @@
                 }
             }
 
+            // trackpad start
+            var trackpadHasInterval = localStorage.getItem('trackpadHasInterval') ?? false;
+
+            trackpadHasIntervalBtn = document.getElementById('trackpadHasInterval-btn')
+            trackpadHasIntervalBtn.innerText = trackpadHasInterval ? 'trackpad has interval: yes' : 'trackpad has interval: no'
+            trackpadHasIntervalBtn.onclick = function () {
+                trackpadHasInterval = !trackpadHasInterval
+                localStorage.setItem('trackpadHasInterval', trackpadHasInterval)
+                trackpadHasIntervalBtn.innerText = trackpadHasInterval ? 'trackpad has interval: yes' : 'trackpad has interval: no'
+            }
+
+            let trackPadRegion = new ZingTouch.Region(document.getElementById('mouse-cont-parent'));
+            let trackPadTarget = document.getElementById('mouse-cont');
+            let trackPadPanGesture = new ZingTouch.Pan()
+            trackPadPanGesture.setId('pan_general')
+
+            var lastTrackpadMoveInterval = Date.now()
+            trackPadRegion.bind(trackPadTarget, trackPadPanGesture, function (e) {
+                let now = Date.now()
+                if (now > lastTrackpadMoveInterval) {
+                    pos = e.detail.data[0].change
+                    socket.emit('mouse_t', {
+                        y: pos.y,
+                        x: pos.x
+                    });
+
+                    if(trackpadHasInterval) {
+                        lastTrackpadMoveInterval = now + 75
+                    }
+                }
+            })
+
+            let trackPadScrollPanGesture = new ZingTouch.Pan({numInputs: 2})
+            trackPadScrollPanGesture.setId('pan_scroll')
+            var lastTrackpadScrollInterval = Date.now()
+            trackPadRegion.bind(trackPadTarget, trackPadScrollPanGesture, function (e) {
+                let now = Date.now()
+                if (now > lastTrackpadScrollInterval) {
+                    pos1 = e.detail.data[0].change
+                    pos2 = e.detail.data[1].change
+                    dx = pos1.x < 0 && pos2.x < 0 ? Math.min(pos1.x, pos2.x) : Math.max(pos1.x, pos2.x)
+                    dy = pos1.y < 0 && pos2.y < 0 ? Math.min(pos1.y, pos2.y) : Math.max(pos1.y, pos2.y)
+                    {#dx = (pos1.x + pos2.x) / 2#}
+                    {#dx = pos1.x#}
+                    {#dy = (pos1.y + pos2.y) / 2#}
+
+                    socket.emit('scroll', {x: dx, y: dy})
+                    lastTrackpadScrollInterval = now + 75
+                }
+            })
+
+            var longTap = new ZingTouch.Tap({
+                minDelay: 0,
+                maxDelay: 300,
+            })
+            longTap.setId('tap1')
+
+            trackPadRegion.bind(trackPadTarget, longTap, function (e) {
+                socket.emit('clk', {key: 'l'})
+            })
+
+            var longTap2 = new ZingTouch.Tap({numInputs: 2})
+            longTap2.setId('tap2')
+            trackPadRegion.bind(trackPadTarget, longTap2, function (e) {
+                socket.emit('clk', {key: 'r'})
+            })
+            // trackpad end
         });
     </script>
 </head>
@@ -198,7 +241,7 @@
         <button class="kbd-btn" style="width: 15rem" id="tab">tab</button>
         <button class="kbd-btn" style="width: 15rem" id="enter">enter</button>
     </div>
-        <button class="kbd-btn" style="width: 45rem; height: 5rem; margin-top: 16px" id="space">space</button>
+    <button class="kbd-btn" style="width: 45rem; height: 5rem; margin-top: 16px" id="space">space</button>
 
     <div style="padding: 38px;">
         <div style="display: flex; justify-content: center; padding: 4px;">
@@ -222,23 +265,44 @@
         <div style="width: 16px"></div>
         <button class="kbd-btn" style="width: 20rem; height: 8rem" id="r-clk">Right click</button>
     </div>
-    <div>
-        <div style="display: flex;">
-            <div id="mouse-cont" style="border: solid; border-radius: 5px"></div>
-            <div style="display: flex; flex-direction: column" id="wheel-ctrl-ver"></div>
+    <div id="whole-mouse-cont-parent">
+        <div id="mouse-cont-parent" style="display: flex;">
+            <div id="mouse-cont"
+                 style="
+                 border: solid;
+                 border-radius: 5px;
+                 width: 40em;
+                 height: 40em;
+                 background-image: radial-gradient(gray, white)"></div>
+
+            <div style="
+            display: flex;
+            flex-direction: column;
+            width: 3em;
+            height: 40em;
+            background-image: linear-gradient(180deg, rgb(0, 178, 200), rgb(0, 127, 200), rgb(0, 178, 200))"
+                 id="wheel-ctrl-ver">
+            </div>
         </div>
-        <div style="display: flex; flex-direction: row" id="wheel-ctrl-hor"></div>
+        <div style="
+        display: flex;
+        flex-direction: row;
+        width: 39em;
+        height: 3em;
+        background-image: linear-gradient(90deg, rgb(0, 178, 200), rgb(0, 127, 200), rgb(0, 178, 200))"
+             id="wheel-ctrl-hor"></div>
     </div>
 </div>
 <br>
+<button id="trackpadHasInterval-btn">trackpad has interval: no</button>
 <br>
 <br>
 <br>
 <br>
-  <script>
-    if ('serviceWorker' in navigator)
-        navigator.serviceWorker.register('service-worker.js');
-    
-  </script>
+<script>
+    {#if ('serviceWorker' in navigator)#}
+    {#    navigator.serviceWorker.register('service-worker.js');#}
+
+</script>
 </body>
 </html>
