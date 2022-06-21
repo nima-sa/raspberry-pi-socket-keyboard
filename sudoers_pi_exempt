@@ -1,0 +1,6 @@
+pi raspberrypi = NOPASSWD: /bin/systemctl enable rpikeyboard
+pi raspberrypi = NOPASSWD: /bin/systemctl disable rpikeyboard
+pi raspberrypi = NOPASSWD: /bin/systemctl start rpikeyboard
+pi raspberrypi = NOPASSWD: /bin/systemctl restart rpikeyboard
+pi raspberrypi = NOPASSWD: /bin/systemctl stop rpikeyboard
+pi raspberrypi = NOPASSWD: /bin/systemctl status rpikeyboard

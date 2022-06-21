@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>rpiKeyboard</title>
     <link rel="shortcut icon" href="static/rpi-logo.ico">
-    {#    <link rel="manifest" href="manifest.json">#}
+    <link rel="manifest" href="manifest.json">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -112,6 +112,29 @@
                 }
             }
 
+
+            var trackpadInterval = localStorage.getItem('trackpadInterval') ?? 150;
+            var scrollInterval = localStorage.getItem('trackpadInterval') ?? 500;
+
+            trackpadIntervalBtn = document.getElementById('trackpadInterval-btn')
+            trackpadIntervalBtn.innerText = 'trackpad interval: ' + trackpadInterval
+            trackpadIntervalBtn.onclick = function () {
+                trackpadInterval = prompt('Trackpad interval', trackpadInterval)
+
+                localStorage.setItem('trackpadInterval', Math.abs(trackpadInterval))
+                trackpadIntervalBtn.innerText = 'trackpad interval: ' + trackpadInterval
+            }
+
+
+            scrollIntervalBtn = document.getElementById('scrollInterval-btn')
+            scrollIntervalBtn.innerText = 'Scroll interval: ' + scrollInterval
+            scrollIntervalBtn.onclick = function () {
+                scrollInterval = prompt('Scroll interval', scrollInterval)
+
+                localStorage.setItem('scrollInterval', Math.abs(scrollInterval))
+                scrollIntervalBtn.innerText = 'Scroll interval: ' + scrollInterval
+            }
+
             // scroll vertical start
             let scrollVerRegion = new ZingTouch.Region(document.getElementById('whole-mouse-cont-parent'));
             let scrollVerTarget = document.getElementById('wheel-ctrl-ver');
@@ -121,7 +144,7 @@
                 if (now > lastMouseScrollVerInterval) {
                     pos = e.detail.data[0].change
                     socket.emit('scroll', {x: 0, y: pos.y})
-                    lastMouseScrollVerInterval = now + 75
+                    lastMouseScrollVerInterval = now + scrollInterval +  100
                 }
             })
             // scroll vertical end
@@ -135,7 +158,7 @@
                 if (now > lastMouseScrollHorInterval) {
                     pos = e.detail.data[0].change
                     socket.emit('scroll', {x: pos.x, y: 0})
-                    lastMouseScrollHorInterval = now + 75
+                    lastMouseScrollHorInterval = now + scrollInterval +  100
                 }
             })
             // scroll horizontal end
@@ -148,16 +171,6 @@
             }
 
             // trackpad start
-            var trackpadHasInterval = localStorage.getItem('trackpadHasInterval') ?? false;
-
-            trackpadHasIntervalBtn = document.getElementById('trackpadHasInterval-btn')
-            trackpadHasIntervalBtn.innerText = trackpadHasInterval ? 'trackpad has interval: yes' : 'trackpad has interval: no'
-            trackpadHasIntervalBtn.onclick = function () {
-                trackpadHasInterval = !trackpadHasInterval
-                localStorage.setItem('trackpadHasInterval', trackpadHasInterval)
-                trackpadHasIntervalBtn.innerText = trackpadHasInterval ? 'trackpad has interval: yes' : 'trackpad has interval: no'
-            }
-
             let trackPadRegion = new ZingTouch.Region(document.getElementById('mouse-cont-parent'));
             let trackPadTarget = document.getElementById('mouse-cont');
             let trackPadPanGesture = new ZingTouch.Pan()
@@ -173,8 +186,8 @@
                         x: pos.x
                     });
 
-                    if(trackpadHasInterval) {
-                        lastTrackpadMoveInterval = now + 75
+                    if(trackpadInterval > 0) {
+                        lastTrackpadMoveInterval = now + trackpadInterval
                     }
                 }
             })
@@ -194,7 +207,7 @@
                     {#dy = (pos1.y + pos2.y) / 2#}
 
                     socket.emit('scroll', {x: dx, y: dy})
-                    lastTrackpadScrollInterval = now + 75
+                    lastTrackpadScrollInterval = now + scrollInterval
                 }
             })
 
@@ -214,6 +227,12 @@
                 socket.emit('clk', {key: 'r'})
             })
             // trackpad end
+
+            document.getElementById('stat').onclick = function(e) {
+                document.getElementById('stat').innerText = 'Restarting...';
+                document.getElementById('stat').style.color = 'orange';
+                socket.emit('restartService', {})
+            }
         });
     </script>
 </head>
@@ -294,14 +313,21 @@
     </div>
 </div>
 <br>
-<button id="trackpadHasInterval-btn">trackpad has interval: no</button>
+<br>
+<button id="trackpadInterval-btn">trackpad interval: </button>
+<button id="scrollInterval-btn">scroll interval: </button>
+<br>
+<br>
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>
 <br>
 <script>
-    {#if ('serviceWorker' in navigator)#}
-    {#    navigator.serviceWorker.register('service-worker.js');#}
+    if ('serviceWorker' in navigator)
+        navigator.serviceWorker.register('service-worker.js');
 
 </script>
 </body>

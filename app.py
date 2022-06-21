@@ -117,5 +117,10 @@ def handle_message(data):
         pyautogui.hscroll(x)
 
 
+@socketio.on('restartService')
+def handle_message(data):
+    os.system('sudo systemctl restart rpikeyboard')
+
+
 if __name__ == '__main__':
     socketio.run(app, '0.0.0.0', '5000')
