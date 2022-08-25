@@ -55,9 +55,21 @@
     <script type="text/javascript" src="static/socket.io.min.js"></script>
     <script type="text/javascript" src="static/zingtouch.min.js"></script>
     <script charset="utf-8" type="text/javascript">
-        // $(document).ready(function () {
+
+        let serveraddr = localStorage.getItem('serveraddr') ?? (document.domain + ':' + location.port);
+        var trackpadInterval = localStorage.getItem('trackpadInterval') ?? '150';
+        var scrollInterval = localStorage.getItem('trackpadInterval') ?? '500';
+
         document.addEventListener("DOMContentLoaded", function (event) {
-            let socket = io('ws://' + document.domain + ':' + location.port);
+            serverAddrBtn = document.getElementById('serveraddr-btn');
+            serverAddrBtn.innerText = 'server: ' + serveraddr
+            serverAddrBtn.onclick = function () {
+                serveraddr = prompt('Server address', serveraddr)
+
+                localStorage.setItem('serveraddr', serveraddr)
+                serverAddrBtn.innerText = 'server: ' + serveraddr
+            }
+            let socket = io('ws://' + serveraddr);
             socket.on('connect', function () {
                 document.getElementById('stat').innerText = 'Connected';
                 document.getElementById('stat').style.color = 'green';
@@ -112,10 +124,6 @@
                 }
             }
 
-
-            var trackpadInterval = localStorage.getItem('trackpadInterval') ?? 150;
-            var scrollInterval = localStorage.getItem('trackpadInterval') ?? 500;
-
             trackpadIntervalBtn = document.getElementById('trackpadInterval-btn')
             trackpadIntervalBtn.innerText = 'trackpad interval: ' + trackpadInterval
             trackpadIntervalBtn.onclick = function () {
@@ -158,7 +166,7 @@
                 if (now > lastMouseScrollHorInterval) {
                     pos = e.detail.data[0].change
                     socket.emit('scroll', {x: pos.x, y: 0})
-                    lastMouseScrollHorInterval = now + scrollInterval +  100
+                    lastMouseScrollHorInterval = now + parseInt(scrollInterval) +  100
                 }
             })
             // scroll horizontal end
@@ -187,7 +195,7 @@
                     });
 
                     if(trackpadInterval > 0) {
-                        lastTrackpadMoveInterval = now + trackpadInterval
+                        lastTrackpadMoveInterval = now + parseInt(trackpadInterval)
                     }
                 }
             })
@@ -316,6 +324,7 @@
 <br>
 <button id="trackpadInterval-btn">trackpad interval: </button>
 <button id="scrollInterval-btn">scroll interval: </button>
+<button id="serveraddr-btn">server: </button>
 <br>
 <br>
 <br>
