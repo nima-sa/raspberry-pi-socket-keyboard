@@ -8,4 +8,4 @@ source rpienv/bin/activate
 pip install -r requirements.txt
 sudo cp rpikeyboard.service /lib/systemd/system/rpikeyboard.service
 systemctl enable rpikeyboard
-
+systemctl start rpikeyboard
