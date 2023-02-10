@@ -1,343 +1,346 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>rpiKeyboard</title>
-    <link rel="shortcut icon" href="static/rpi-logo.ico">
-    <link rel="manifest" href="manifest.json">
+    <link rel="shortcut icon" href="static/rpi-logo.ico" />
+    <link rel="manifest" href="manifest.json" />
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="RPi keyboard">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#000000"/>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="RPi keyboard" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#000000" />
 
-    {#      <meta name="viewport"#}
-    {#        content="width=device-width, viewport-fit=cover, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />#}
-    <link rel="apple-touch-icon" href="static/Icon-192.png">
+    {# <meta name="viewport" #}
+    {# content="width=device-width, viewport-fit=cover, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /> #}
+    <link rel="apple-touch-icon" href="static/Icon-192.png" />
 
     <style>
-        * {
-            font-family: "Segoe UI", Arial, sans-serif;
-        }
-
-        .mouse-btn {
-            width: 4em;
-            height: 4em;
-            border: none;
-        }
-
-        .mouse-wheel {
-            width: 8em;
-            height: 8em;
-            border: none;
-        }
-
-        .mouse-row {
-            display: flex;
-        }
-
-        .kbd-btn {
-            background: white;
-            border: solid 2px;
-            border-radius: 5px;
-            box-shadow: none !important;
-            width: 10rem;
-            height: 8rem;
-            transition: all 200ms ease-out;
-            font-size: 250%;
-        }
-
-        .kbd-btn:hover {
-            box-shadow: 0 10px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
-        }
+      * {
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+      
+      .mouse-btn {
+        width: 4em;
+        height: 4em;
+        border: none;
+      }
+      
+      .mouse-wheel {
+        width: 8em;
+        height: 8em;
+        border: none;
+      }
+      
+      .mouse-row {
+        display: flex;
+      }
+      
+      .kbd-btn {
+        background: white;
+        border: solid 2px;
+        border-radius: 5px;
+        box-shadow: none !important;
+        width: 10rem;
+        height: 8rem;
+        transition: all 200ms ease-out;
+        font-size: 250%;
+      }
+      
+      .kbd-btn:hover {
+        box-shadow: 0 10px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
+      }
     </style>
     <script type="text/javascript" src="static/socket.io.min.js"></script>
     <script type="text/javascript" src="static/zingtouch.min.js"></script>
-    <script charset="utf-8" type="text/javascript">
+    <script charset="utf-8"
+      type="text/javascript">
+      let serveraddr = localStorage.getItem('serveraddr') ?? document.domain + ':' + location.port
+      var trackpadInterval = localStorage.getItem('trackpadInterval') ?? '150'
+      var scrollInterval = localStorage.getItem('trackpadInterval') ?? '500'
 
-        let serveraddr = localStorage.getItem('serveraddr') ?? (document.domain + ':' + location.port);
-        var trackpadInterval = localStorage.getItem('trackpadInterval') ?? '150';
-        var scrollInterval = localStorage.getItem('trackpadInterval') ?? '500';
-
-        document.addEventListener("DOMContentLoaded", function (event) {
-            serverAddrBtn = document.getElementById('serveraddr-btn');
-            serverAddrBtn.innerText = 'server: ' + serveraddr
-            serverAddrBtn.onclick = function () {
-                serveraddr = prompt('Server address', serveraddr)
-
-                localStorage.setItem('serveraddr', serveraddr)
-                serverAddrBtn.innerText = 'server: ' + serveraddr
-            }
-            let socket = io('ws://' + serveraddr);
-            socket.on('connect', function () {
-                document.getElementById('stat').innerText = 'Connected';
-                document.getElementById('stat').style.color = 'green';
-            });
-
-            socket.on('disconnect', function () {
-                document.getElementById('stat').innerText = 'Disconnected';
-                document.getElementById('stat').style.color = 'red';
-            });
-
-            function spec(v) {
-                socket.emit('spec', {key: v});
-            }
-
-            document.getElementById('txtf').onkeydown = function (event) {
-                const key = event.keyCode || event.charCode;
-
-                if (key === 8) {
-                    spec('backspace');
-                    return false;
-                } else if (key === 13) {
-                    spec('enter');
-                    return false;
-                } else {
-                    return true;
-                }
-            };
-
-            document.getElementById('txtf').addEventListener('input', () => {
-                const elem = document.getElementById('txtf');
-                const key = elem.value
-                elem.value = '';
-                const pyautoguiSupportedChars = [
-                    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-                    'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
-                    'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
-                    'z', 'x', 'c', 'v', 'b', 'n', 'm',
-                    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-                    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
-                    'Z', 'X', 'C', 'V', 'B', 'N', 'M',
-                    ',', '.', '/', '[', ']', '\\', ';', '\'', '-', '=', '`',
-                    '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_',
-                    '+', '{', '}', '|', ':', '"', '<', '>', '?'
-                ]
-                const o = pyautoguiSupportedChars.indexOf(key) !== -1 ? 1 : 0
-                socket.emit('kbhit', {key: key, o: o});
-            });
-            const specs = ['up', 'left', 'right', 'down', 'escape', 'tab', 'enter', 'space'];
-            for (let k = 0; k < specs.length; k++) {
-                document.getElementById(specs[k]).onclick = function () {
-                    spec(specs[k])
-                }
-            }
-
-            trackpadIntervalBtn = document.getElementById('trackpadInterval-btn')
-            trackpadIntervalBtn.innerText = 'trackpad interval: ' + trackpadInterval
-            trackpadIntervalBtn.onclick = function () {
-                trackpadInterval = prompt('Trackpad interval', trackpadInterval)
-
-                localStorage.setItem('trackpadInterval', Math.abs(trackpadInterval))
-                trackpadIntervalBtn.innerText = 'trackpad interval: ' + trackpadInterval
-            }
-
-
-            scrollIntervalBtn = document.getElementById('scrollInterval-btn')
-            scrollIntervalBtn.innerText = 'Scroll interval: ' + scrollInterval
-            scrollIntervalBtn.onclick = function () {
-                scrollInterval = prompt('Scroll interval', scrollInterval)
-
-                localStorage.setItem('scrollInterval', Math.abs(scrollInterval))
-                scrollIntervalBtn.innerText = 'Scroll interval: ' + scrollInterval
-            }
-
-            // scroll vertical start
-            let scrollVerRegion = new ZingTouch.Region(document.getElementById('whole-mouse-cont-parent'));
-            let scrollVerTarget = document.getElementById('wheel-ctrl-ver');
-            var lastMouseScrollVerInterval = Date.now()
-            scrollVerRegion.bind(scrollVerTarget, 'pan', function (e) {
-                let now = Date.now()
-                if (now > lastMouseScrollVerInterval) {
-                    pos = e.detail.data[0].change
-                    socket.emit('scroll', {x: 0, y: pos.y})
-                    lastMouseScrollVerInterval = now + scrollInterval +  100
-                }
+      var trackpadMoveCoeff = localStorage.getItem('trackpadMoveCoeff') ?? '5'
+      var trackpadScrollCoeff = localStorage.getItem('trackpadScrollCoeff') ?? '5'
+      
+      document.addEventListener('DOMContentLoaded', function (event) {
+        serverAddrBtn = document.getElementById('serveraddr-btn')
+        serverAddrBtn.innerText = 'server: ' + serveraddr
+        serverAddrBtn.onclick = function () {
+          serveraddr = prompt('Server address', serveraddr)
+      
+          localStorage.setItem('serveraddr', serveraddr)
+          serverAddrBtn.innerText = 'server: ' + serveraddr
+        }
+        let socket = io('ws://' + serveraddr)
+        socket.on('connect', function () {
+          document.getElementById('stat').innerText = 'Connected'
+          document.getElementById('stat').style.color = 'green'
+        })
+      
+        socket.on('disconnect', function () {
+          document.getElementById('stat').innerText = 'Disconnected'
+          document.getElementById('stat').style.color = 'red'
+        })
+      
+        function spec(v) {
+          socket.emit('spec', { key: v })
+        }
+      
+        document.getElementById('txtf').onkeydown = function (event) {
+          const key = event.keyCode || event.charCode
+      
+          if (key === 8) {
+            spec('backspace')
+            return false
+          } else if (key === 13) {
+            spec('enter')
+            return false
+          } else {
+            return true
+          }
+        }
+      
+        document.getElementById('txtf').addEventListener('input', () => {
+          const elem = document.getElementById('txtf')
+          const key = elem.value
+          elem.value = ''
+          const pyautoguiSupportedChars = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', '[', ']', '\\', ';', "'", '-', '=', '`', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':', '"', '<', '>', '?']
+          const o = pyautoguiSupportedChars.indexOf(key) !== -1 ? 1 : 0
+          socket.emit('kbhit', { key: key, o: o })
+        })
+        const specs = ['up', 'left', 'right', 'down', 'escape', 'tab', 'enter', 'space']
+        for (let k = 0; k < specs.length; k++) {
+          document.getElementById(specs[k]).onclick = function () {
+            spec(specs[k])
+          }
+        }
+      
+        trackpadIntervalBtn = document.getElementById('trackpadInterval-btn')
+        trackpadIntervalBtn.innerText = 'trackpad interval: ' + trackpadInterval
+        trackpadIntervalBtn.onclick = function () {
+          trackpadInterval = prompt('Trackpad interval', trackpadInterval)
+      
+          localStorage.setItem('trackpadInterval', Math.abs(trackpadInterval))
+          trackpadIntervalBtn.innerText = 'trackpad interval: ' + trackpadInterval
+        }
+      
+        scrollIntervalBtn = document.getElementById('scrollInterval-btn')
+        scrollIntervalBtn.innerText = 'Scroll interval: ' + scrollInterval
+        scrollIntervalBtn.onclick = function () {
+          scrollInterval = prompt('Scroll interval', scrollInterval)
+      
+          localStorage.setItem('scrollInterval', Math.abs(scrollInterval))
+          scrollIntervalBtn.innerText = 'Scroll interval: ' + scrollInterval
+        }
+        
+        trackpadMoveCoeffBtn = document.getElementById('trackpadMoveCoeff-btn')
+        trackpadMoveCoeffBtn.innerText = 'Trackpad pan coeff: ' + trackpadMoveCoeff
+        trackpadMoveCoeffBtn.onclick = function () {
+          trackpadMoveCoeff = prompt('Trackpad pan coeff', trackpadMoveCoeff)
+      
+          localStorage.setItem('trackpadMoveCoeff', Math.abs(trackpadMoveCoeff))
+          trackpadMoveCoeffBtn.innerText = 'Trackpad pan coeff: ' + trackpadMoveCoeff
+        }
+        
+        trackpadScrollCoeffBtn = document.getElementById('trackpadScrollCoeff-btn')
+        trackpadScrollCoeffBtn.innerText = 'Trackpad scroll coeff: ' + trackpadScrollCoeff
+        trackpadScrollCoeffBtn.onclick = function () {
+          trackpadScrollCoeff = prompt('Trackpad scroll coeff', trackpadScrollCoeff)
+      
+          localStorage.setItem('trackpadScrollCoeff', Math.abs(trackpadScrollCoeff))
+          trackpadScrollCoeffBtn.innerText = 'Trackpad scroll coeff: ' + trackpadScrollCoeff
+        }
+      
+        // scroll vertical start
+        let scrollVerRegion = new ZingTouch.Region(document.getElementById('whole-mouse-cont-parent'))
+        let scrollVerTarget = document.getElementById('wheel-ctrl-ver')
+        var lastMouseScrollVerInterval = Date.now()
+        scrollVerRegion.bind(scrollVerTarget, 'pan', function (e) {
+          let now = Date.now()
+          if (now > lastMouseScrollVerInterval) {
+            pos = e.detail.data[0].change
+            socket.emit('scroll', { 
+                x: 0, 
+                y: pos.y * parseInt(trackpadScrollCoeff),
+             })
+            lastMouseScrollVerInterval = now + parseInt(scrollInterval) + 100
+          }
+        })
+        // scroll vertical end
+      
+        // scroll horizontal start
+        let scrollHorRegion = new ZingTouch.Region(document.getElementById('whole-mouse-cont-parent'))
+        let scrollHorTarget = document.getElementById('wheel-ctrl-hor')
+        var lastMouseScrollHorInterval = Date.now()
+        scrollHorRegion.bind(scrollHorTarget, 'pan', function (e) {
+          let now = Date.now()
+          if (now > lastMouseScrollHorInterval) {
+            pos = e.detail.data[0].change
+            socket.emit('scroll', { 
+                x: pos.x * parseInt(trackpadScrollCoeff), 
+                y: 0,
+             })
+            lastMouseScrollHorInterval = now + parseInt(scrollInterval) + 100
+          }
+        })
+        // scroll horizontal end
+      
+        const clks = ['r', 'l', 'l2']
+        for (let k = 0; k < clks.length; k++) {
+          document.getElementById(clks[k] + '-clk').onclick = function () {
+            socket.emit('clk', { key: clks[k] })
+          }
+        }
+      
+        // trackpad start
+        let trackPadRegion = new ZingTouch.Region(document.getElementById('mouse-cont-parent'))
+        let trackPadTarget = document.getElementById('mouse-cont')
+        let trackPadPanGesture = new ZingTouch.Pan()
+        trackPadPanGesture.setId('pan_general')
+      
+        var lastTrackpadMoveInterval = Date.now()
+        trackPadRegion.bind(trackPadTarget, trackPadPanGesture, function (e) {
+          let now = Date.now()
+          if (now > lastTrackpadMoveInterval) {
+            pos = e.detail.data[0].change
+            socket.emit('mouse_t', {
+              y: pos.y * parseInt(trackpadMoveCoeff),
+              x: pos.x * parseInt(trackpadMoveCoeff),
             })
-            // scroll vertical end
-
-            // scroll horizontal start
-            let scrollHorRegion = new ZingTouch.Region(document.getElementById('whole-mouse-cont-parent'));
-            let scrollHorTarget = document.getElementById('wheel-ctrl-hor');
-            var lastMouseScrollHorInterval = Date.now()
-            scrollHorRegion.bind(scrollHorTarget, 'pan', function (e) {
-                let now = Date.now()
-                if (now > lastMouseScrollHorInterval) {
-                    pos = e.detail.data[0].change
-                    socket.emit('scroll', {x: pos.x, y: 0})
-                    lastMouseScrollHorInterval = now + parseInt(scrollInterval) +  100
-                }
-            })
-            // scroll horizontal end
-
-            const clks = ['r', 'l', 'l2'];
-            for (let k = 0; k < clks.length; k++) {
-                document.getElementById(clks[k] + '-clk').onclick = function () {
-                    socket.emit('clk', {key: clks[k]})
-                }
+      
+            if (trackpadInterval > 0) {
+              lastTrackpadMoveInterval = now + parseInt(trackpadInterval)
             }
-
-            // trackpad start
-            let trackPadRegion = new ZingTouch.Region(document.getElementById('mouse-cont-parent'));
-            let trackPadTarget = document.getElementById('mouse-cont');
-            let trackPadPanGesture = new ZingTouch.Pan()
-            trackPadPanGesture.setId('pan_general')
-
-            var lastTrackpadMoveInterval = Date.now()
-            trackPadRegion.bind(trackPadTarget, trackPadPanGesture, function (e) {
-                let now = Date.now()
-                if (now > lastTrackpadMoveInterval) {
-                    pos = e.detail.data[0].change
-                    socket.emit('mouse_t', {
-                        y: pos.y,
-                        x: pos.x
-                    });
-
-                    if(trackpadInterval > 0) {
-                        lastTrackpadMoveInterval = now + parseInt(trackpadInterval)
-                    }
-                }
-            })
-
-            let trackPadScrollPanGesture = new ZingTouch.Pan({numInputs: 2})
-            trackPadScrollPanGesture.setId('pan_scroll')
-            var lastTrackpadScrollInterval = Date.now()
-            trackPadRegion.bind(trackPadTarget, trackPadScrollPanGesture, function (e) {
-                let now = Date.now()
-                if (now > lastTrackpadScrollInterval) {
-                    pos1 = e.detail.data[0].change
-                    pos2 = e.detail.data[1].change
-                    dx = pos1.x < 0 && pos2.x < 0 ? Math.min(pos1.x, pos2.x) : Math.max(pos1.x, pos2.x)
-                    dy = pos1.y < 0 && pos2.y < 0 ? Math.min(pos1.y, pos2.y) : Math.max(pos1.y, pos2.y)
-                    {#dx = (pos1.x + pos2.x) / 2#}
-                    {#dx = pos1.x#}
-                    {#dy = (pos1.y + pos2.y) / 2#}
-
-                    socket.emit('scroll', {x: dx, y: dy})
-                    lastTrackpadScrollInterval = now + scrollInterval
-                }
-            })
-
-            var longTap = new ZingTouch.Tap({
-                minDelay: 0,
-                maxDelay: 300,
-            })
-            longTap.setId('tap1')
-
-            trackPadRegion.bind(trackPadTarget, longTap, function (e) {
-                socket.emit('clk', {key: 'l'})
-            })
-
-            var longTap2 = new ZingTouch.Tap({numInputs: 2})
-            longTap2.setId('tap2')
-            trackPadRegion.bind(trackPadTarget, longTap2, function (e) {
-                socket.emit('clk', {key: 'r'})
-            })
-            // trackpad end
-
-            document.getElementById('stat').onclick = function(e) {
-                document.getElementById('stat').innerText = 'Restarting...';
-                document.getElementById('stat').style.color = 'orange';
-                socket.emit('restartService', {})
-            }
-        });
+          }
+        })
+      
+        let trackPadScrollPanGesture = new ZingTouch.Pan({ numInputs: 2 })
+        trackPadScrollPanGesture.setId('pan_scroll')
+        var lastTrackpadScrollInterval = Date.now()
+        trackPadRegion.bind(trackPadTarget, trackPadScrollPanGesture, function (e) {
+          let now = Date.now()
+          if (now > lastTrackpadScrollInterval) {
+            pos1 = e.detail.data[0].change
+            pos2 = e.detail.data[1].change
+            dx = pos1.x < 0 && pos2.x < 0 ? Math.min(pos1.x, pos2.x) : Math.max(pos1.x, pos2.x)
+            dy = pos1.y < 0 && pos2.y < 0 ? Math.min(pos1.y, pos2.y) : Math.max(pos1.y, pos2.y)
+      
+            socket.emit('scroll', { x: dx, y: dy })
+            lastTrackpadScrollInterval = now + scrollInterval
+          }
+        })
+      
+        var longTap = new ZingTouch.Tap({
+          minDelay: 0,
+          maxDelay: 300
+        })
+        longTap.setId('tap1')
+      
+        trackPadRegion.bind(trackPadTarget, longTap, function (e) {
+          socket.emit('clk', { key: 'l' })
+        })
+      
+        var longTap2 = new ZingTouch.Tap({ numInputs: 2 })
+        longTap2.setId('tap2')
+        trackPadRegion.bind(trackPadTarget, longTap2, function (e) {
+          socket.emit('clk', { key: 'r' })
+        })
+        // trackpad end
+      
+        document.getElementById('stat').onclick = function (e) {
+          document.getElementById('stat').innerText = 'Restarting...'
+          document.getElementById('stat').style.color = 'orange'
+          socket.emit('restartService', {})
+        }
+      })
     </script>
-</head>
-<body>
-<div>
-    <p style="text-align: center; font-weight: bold; font-size: 300%; color: red"
-       id="stat">Disconnected</p>
-</div>
+  </head>
+  <body>
+    <div>
+      <p style="text-align: center; font-weight: bold; font-size: 300%; color: red" id="stat">Disconnected</p>
+    </div>
 
-<div style="display: flex; padding: 16px">
-    <label for="txtf">
-    </label>
-    <input
-            style="border: solid 3px;
+    <div style="display: flex; padding: 16px">
+      <label for="txtf"></label>
+      <input style="border: solid 3px;
             width: 100%; height: 200px;
             border-radius: 12px;
             text-align: center;
-            font-size: 300%;"
-            type="text" id="txtf" placeholder="Type here...">
-</div>
+            font-size: 300%;" type="text" id="txtf" placeholder="Type here..." />
+    </div>
 
-<div style="display: flex; justify-content: center; padding: 20px;flex-direction: column;align-items: center;">
-    <div>
+    <div style="display: flex; justify-content: center; padding: 20px;flex-direction: column;align-items: center;">
+      <div>
         <button class="kbd-btn" style="width: 15rem" id="escape">esc</button>
         <button class="kbd-btn" style="width: 15rem" id="tab">tab</button>
         <button class="kbd-btn" style="width: 15rem" id="enter">enter</button>
-    </div>
-    <button class="kbd-btn" style="width: 45rem; height: 5rem; margin-top: 16px" id="space">space</button>
+      </div>
+      <button class="kbd-btn" style="width: 45rem; height: 5rem; margin-top: 16px" id="space">space</button>
 
-    <div style="padding: 38px;">
+      <div style="padding: 38px;">
         <div style="display: flex; justify-content: center; padding: 4px;">
-            <button class="kbd-btn" id="up">↑</button>
+          <button class="kbd-btn" id="up">↑</button>
         </div>
 
         <div>
-            <button class="kbd-btn" id="left">←</button>
-            <button class="kbd-btn" id="down">↓</button>
-            <button class="kbd-btn" id="right">→</button>
+          <button class="kbd-btn" id="left">←</button>
+          <button class="kbd-btn" id="down">↓</button>
+          <button class="kbd-btn" id="right">→</button>
         </div>
+      </div>
     </div>
 
-</div>
-
-<div style="display: flex; justify-content: center; flex-direction: column; align-items: center">
-    <div style="display: flex; padding: 8px">
-        <button class="kbd-btn" style="width: 8rem; height: 8rem; font-size: 30px" id="l2-clk">Double<br/>click</button>
+    <div style="display: flex; justify-content: center; flex-direction: column; align-items: center">
+      <div style="display: flex; padding: 8px">
+        <button class="kbd-btn" style="width: 8rem; height: 8rem; font-size: 30px; text-align: center; padding-left:0; padding-right:0;" id="l2-clk">Double<br />click</button>
         <div style="width: 4px"></div>
         <button class="kbd-btn" style="width: 12rem; height: 8rem" id="l-clk">Left click</button>
         <div style="width: 16px"></div>
         <button class="kbd-btn" style="width: 20rem; height: 8rem" id="r-clk">Right click</button>
-    </div>
-    <div id="whole-mouse-cont-parent">
+      </div>
+      <div id="whole-mouse-cont-parent">
         <div id="mouse-cont-parent" style="display: flex;">
-            <div id="mouse-cont"
-                 style="
+          <div id="mouse-cont" style="
                  border: solid;
                  border-radius: 5px;
                  width: 40em;
                  height: 40em;
                  background-image: radial-gradient(gray, white)"></div>
 
-            <div style="
+          <div style="
             display: flex;
             flex-direction: column;
             width: 3em;
             height: 40em;
-            background-image: linear-gradient(180deg, rgb(0, 178, 200), rgb(0, 127, 200), rgb(0, 178, 200))"
-                 id="wheel-ctrl-ver">
-            </div>
+            background-image: linear-gradient(180deg, rgb(0, 178, 200), rgb(0, 127, 200), rgb(0, 178, 200))" id="wheel-ctrl-ver"></div>
         </div>
         <div style="
         display: flex;
         flex-direction: row;
         width: 39em;
         height: 3em;
-        background-image: linear-gradient(90deg, rgb(0, 178, 200), rgb(0, 127, 200), rgb(0, 178, 200))"
-             id="wheel-ctrl-hor"></div>
+        background-image: linear-gradient(90deg, rgb(0, 178, 200), rgb(0, 127, 200), rgb(0, 178, 200))" id="wheel-ctrl-hor"></div>
+      </div>
     </div>
-</div>
-<br>
-<br>
-<button id="trackpadInterval-btn">trackpad interval: </button>
-<button id="scrollInterval-btn">scroll interval: </button>
-<button id="serveraddr-btn">server: </button>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<script>
-    if ('serviceWorker' in navigator)
-        navigator.serviceWorker.register('service-worker.js');
-
-</script>
-</body>
+    <br />
+    <br />
+    <button id="trackpadInterval-btn">trackpad interval:</button>
+    <button id="scrollInterval-btn">scroll interval:</button>
+    <button id="serveraddr-btn">server:</button>
+    <button id="trackpadMoveCoeff-btn">Trackpad pan coeff:</button>
+    <button id="trackpadScrollCoeff-btn">Trackpad scroll coeff:</button>
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <script>
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js')
+    </script>
+  </body>
 </html>
